@@ -1,2 +1,5 @@
 hpy-env/ 
 .vscode/
+
+html-cache/**
+!html-cache/.gitkeep

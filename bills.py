@@ -5,9 +5,25 @@ currently before parliament
 from bs4 import BeautifulSoup
 import requests
 
+
+def cache_request(url: str) -> str:
+    """Handles requests for web pages and saves them
+    locally, enabling the script to be run repeatedly offline
+    """
+    cache = "html-cache/"
+    url_hash = str(hash(url))
+    try:
+        with open(cache + url_hash, 'r') as fp:
+            html = fp.read()
+    except FileNotFoundError:
+        html = requests.get(url).text
+        with open(cache + url_hash, 'w') as fp:
+            fp.write(html)
+    return html
+
 # Generate the total soup
-URL = "https://services.parliament.uk/Bills/"
-HTML = requests.get(URL).text
+URL = "https://services.parliament.uk/"
+HTML = cache_request(URL + "Bills/")
 soup = BeautifulSoup(HTML, 'html5lib')
 
 # Find all bills and categorise them accordingly
@@ -29,5 +45,9 @@ print(f"{len(commons)} bills in the Commons,")
 print(f"{len(lords)} bills in the Lords,")
 print(f"{len(ras)} bills granted Royal Assent.")
 
+# Record links to a page with info about the stages of the bill
+commons_stages = {}
 for bill in commons:
-    print(bill('td', 'bill-item-description')[0].a.text.strip())
+    data = bill('td', 'bill-item-description')[0].a
+    commons_stages[data.text.strip()] = data['href'][:-5] + 'stages.html'
+    print(f"{data.text.strip():100}{data['href']}")
